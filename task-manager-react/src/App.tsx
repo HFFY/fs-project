@@ -3,7 +3,7 @@ import TaskList from "./components/TaskList";
 import TaskInput from "./components/TaskInput";
 import Footer from "./components/Footer";
 import EmptyState from "./components/EmptyState";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type Task =  {
   id: number;
@@ -12,19 +12,33 @@ type Task =  {
 };
 
 function App() { 
-  const [tasks, setTaks] = useState<Task[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
 
-  const handleAddTask = (text: string) => {
-    const newTask: Task = {
-      id: Date.now(),
-      text: text,
-      completed: false,
+  useEffect(() => {
+    const fetchTasks = async () => {
+        const response = await fetch("http://localhost:3000/tasks");
+        const data = await response.json();
+        setTasks(data);
     };
-    setTaks([...tasks, newTask]);
-  };
+    fetchTasks();
+}, []);
+
+  const handleAddTask = async (text: string) => {
+    const response = await fetch("http://localhost:3000/tasks", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            text: text
+        })
+    });
+    const newTask = await response.json();
+    setTasks([...tasks, newTask]);
+};
 
   const handleCompleteTask = (id: number) => {
-    setTaks(
+    setTasks(
       tasks.map((task) =>
         task.id === id ? { ...task, completed: true } : task
       )
@@ -32,15 +46,21 @@ function App() {
   };
 
   const handleUncompleteTask = (id: number) => {
-    setTaks(
+    setTasks(
       tasks.map((task) =>
         task.id === id ? { ...task, completed: false } : task
       )
     );
   };
 
-  const handleDeleteTask = (id: number) => {
-    setTaks(tasks.filter((task) => task.id !== id));
+  const handleDeleteTask = async (id: number) => {
+    const response = await fetch(`http://localhost:3000/tasks/${id}`, {
+        method: "DELETE"
+    });
+    if (!response.ok) {
+        return;
+    }
+    setTasks(tasks.filter((task) => task.id !== id));
   };
 
   return (
