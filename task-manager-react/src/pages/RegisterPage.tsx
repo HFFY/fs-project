@@ -9,7 +9,6 @@ function RegisterPage() {
   const handleRegister = async (username: string, password: string) => {
     setError("");
     try {
-      // Call the POST /users endpoint we created to insert a new user.
       const response = await fetch("http://localhost:3000/users", {
         method: "POST",
         headers: {

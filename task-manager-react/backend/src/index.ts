@@ -4,14 +4,11 @@ const bcrypt = require("bcrypt");
 const express = require("express");
 const cors = require("cors");
 
-// BCRYPT: Number of salt rounds used when hashing passwords.
 const SALT_ROUNDS = 10;
 
-// PRISMA CHANGE: Import Prisma Client
 const { PrismaClient } = require("./generated/prisma/client");
 const { PrismaPg } = require("@prisma/adapter-pg");
 
-// PRISMA CHANGE: Create the connection to PostgreSQL through Prisma
 const adapter = new PrismaPg({
 	connectionString: process.env.DATABASE_URL!,
 });
@@ -38,27 +35,20 @@ const tasks: Task[] = [
     {id:2, text:"Probar las rutas de BE", completed:false}
 ];
 
-// PRISMA CHANGE: GET /tasks now reads from PostgreSQL instead of the array
 app.get("/tasks", async (req: any, res: any) => {
 	const tasksFromDatabase = await prisma.task.findMany();
 	res.json(tasksFromDatabase);
 });
 
-// NEW JWT CHANGE: This is a protected route. 
-// // NEW JWT CHANGE: The user must send a valid token to access this route. 
-app.get("/profile", (req: any, res: any) => {    
-    // NEW JWT CHANGE: The token is expected in the Authorization header.    
+app.get("/profile", (req: any, res: any) => { 
     const authHeader = req.headers.authorization;    
     if (!authHeader) {        
         return res.status(401).json({            
             message: "No token provided"        
         });    
-    }    
-    // NEW JWT CHANGE: The header usually looks like "Bearer token_here".    
-    // // NEW JWT CHANGE: We split it and take only the token part.    
+    }  
     const token = authHeader.split(" ")[1];    
-    try {        
-        // NEW JWT CHANGE: jwt.verify checks if the token is valid.        
+    try {      
         const decoded = jwt.verify(token, "secret_key");        
         res.json({            
             message: "Protected profile data",            
@@ -71,7 +61,6 @@ app.get("/profile", (req: any, res: any) => {
     } 
 });
 
-// PRISMA CHANGE: DELETE /tasks/:id now removes the row from PostgreSQL
 app.delete("/tasks/:id", async (req: any, res: any) => {
     const id = Number(req.params.id);
 
@@ -118,8 +107,6 @@ app.post("/tasks", async (req: any, res: any) => {
     res.status(201).json(newTask);
 });
 
-// USER CHANGE: Create a new user in the User table.
-// USER CHANGE: We receive a username and password and insert them into PostgreSQL.
 app.post("/users", async (req: any, res: any) => {
     const { username, password } = req.body || {};
     if (!username || username.trim() === "" || !password || password.trim() === "") {
@@ -128,7 +115,6 @@ app.post("/users", async (req: any, res: any) => {
         });
     }
 
-    // USER CHANGE: Make sure the username (primary key) is not already taken.
     const existingUser = await prisma.user.findUnique({
         where: { username: username }
     });
@@ -138,7 +124,6 @@ app.post("/users", async (req: any, res: any) => {
         });
     }
 
-    // BCRYPT: Hash the password before storing it. We never save the plain text.
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
 
     const newUser = await prisma.user.create({
@@ -153,31 +138,22 @@ app.post("/users", async (req: any, res: any) => {
     });
 });
 
-// JWT: This is a basic login route.
-// LOGIN CHANGE: We now compare the email/password against the User table
-// LOGIN CHANGE: instead of using fixed credentials.
 app.post("/login", async (req: any, res: any) => {
     const { email, password } = req.body || {};
 
-    // LOGIN CHANGE: Look up the user by username (we use the email as the username).
     const user = await prisma.user.findUnique({
         where: { username: email }
     });
 
-    // BCRYPT: Compare the plain password sent by the client against the stored hash.
+    //Compare the plain password sent by the client against the stored hash.
     const passwordMatches = user
         ? await bcrypt.compare(password, user.password)
         : false;
 
-    // LOGIN CHANGE: Only if the user exists and the password matches do we issue a token.
     if (user && passwordMatches) {
-        // JWT: If the credentials are correct, we create a token.
         const token = jwt.sign(
-            // JWT: This is the information stored inside the token.
             { email: email },
-            // JWT: This secret is used to sign the token.
             "secret_key",
-            // JWT: The token will expire in 1 hour.
             { expiresIn: "1h" }
         );
         return res.json({
@@ -190,7 +166,6 @@ app.post("/login", async (req: any, res: any) => {
     });
 });
 
-// PRISMA CHANGE: PUT /tasks/:id now updates the row in PostgreSQL
 app.put("/tasks/:id", async (req: any, res: any) => {
     const id = Number(req.params.id);
     const { text, completed } = req.body || {};
