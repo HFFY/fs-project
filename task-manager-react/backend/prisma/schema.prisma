@@ -20,3 +20,8 @@ model Task {
   completed Boolean @default(false)
   createdAt DateTime @default(now())
 }
+
+model User {
+  username String @id
+  password String
+}

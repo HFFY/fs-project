@@ -1,79 +1,21 @@
-import Header from "./components/Header";
-import TaskList from "./components/TaskList";
-import TaskInput from "./components/TaskInput";
-import Footer from "./components/Footer";
-import EmptyState from "./components/EmptyState";
-import { useEffect, useState } from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
+import HomePage from "./pages/HomePage";
 
-type Task =  {
-  id: number;
-  text: string;
-  completed: boolean;
-};
-
-function App() { 
-  const [tasks, setTasks] = useState<Task[]>([]);
-
-  useEffect(() => {
-    const fetchTasks = async () => {
-        const response = await fetch("http://localhost:3000/tasks");
-        const data = await response.json();
-        setTasks(data);
-    };
-    fetchTasks();
-}, []);
-
-  const handleAddTask = async (text: string) => {
-    const response = await fetch("http://localhost:3000/tasks", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            text: text
-        })
-    });
-    const newTask = await response.json();
-    setTasks([...tasks, newTask]);
-};
-
-  const handleCompleteTask = (id: number) => {
-    setTasks(
-      tasks.map((task) =>
-        task.id === id ? { ...task, completed: true } : task
-      )
-    );
-  };
-
-  const handleUncompleteTask = (id: number) => {
-    setTasks(
-      tasks.map((task) =>
-        task.id === id ? { ...task, completed: false } : task
-      )
-    );
-  };
-
-  const handleDeleteTask = async (id: number) => {
-    const response = await fetch(`http://localhost:3000/tasks/${id}`, {
-        method: "DELETE"
-    });
-    if (!response.ok) {
-        return;
-    }
-    setTasks(tasks.filter((task) => task.id !== id));
-  };
-
+function App() {
   return (
-    <div className="app-container">
-      <Header />
-      <TaskInput onAddTask={handleAddTask} />
-      {tasks.length === 0 ? (
-        <EmptyState />
-      ) : (
-        <TaskList tasks={tasks} onCompleteTask={handleCompleteTask} onUncompleteTask={handleUncompleteTask} onDeleteTask={handleDeleteTask}/>
-      )}
-      <Footer tasks={tasks} />
-    </div>
-  )
-} 
-export default App; 
+    <BrowserRouter>
+      <Routes>
+        {/* Login is the main page of the project */}
+        <Route path="/" element={<LoginPage />} />
+        {/* Register screen: same view as login, creates a new user */}
+        <Route path="/register" element={<RegisterPage />} />
+        {/* Home holds everything the app had until now */}
+        <Route path="/home" element={<HomePage />} />
+      </Routes>
+    </BrowserRouter>
+  );
+}
+
+export default App;

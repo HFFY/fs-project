@@ -1,7 +1,11 @@
 require("dotenv/config");
 const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
 const express = require("express");
 const cors = require("cors");
+
+// BCRYPT: Number of salt rounds used when hashing passwords.
+const SALT_ROUNDS = 10;
 
 // PRISMA CHANGE: Import Prisma Client
 const { PrismaClient } = require("./generated/prisma/client");
@@ -114,11 +118,59 @@ app.post("/tasks", async (req: any, res: any) => {
     res.status(201).json(newTask);
 });
 
+// USER CHANGE: Create a new user in the User table.
+// USER CHANGE: We receive a username and password and insert them into PostgreSQL.
+app.post("/users", async (req: any, res: any) => {
+    const { username, password } = req.body || {};
+    if (!username || username.trim() === "" || !password || password.trim() === "") {
+        return res.status(400).json({
+            message: "Username and password are required"
+        });
+    }
+
+    // USER CHANGE: Make sure the username (primary key) is not already taken.
+    const existingUser = await prisma.user.findUnique({
+        where: { username: username }
+    });
+    if (existingUser) {
+        return res.status(409).json({
+            message: "User already exists"
+        });
+    }
+
+    // BCRYPT: Hash the password before storing it. We never save the plain text.
+    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+
+    const newUser = await prisma.user.create({
+        data: {
+            username: username,
+            password: hashedPassword
+        }
+    });
+    res.status(201).json({
+        message: "User created successfully",
+        username: newUser.username
+    });
+});
+
 // JWT: This is a basic login route.
-// JWT: For now, we are using fixed credentials only for practice.
-app.post("/login", (req: any, res: any) => {
+// LOGIN CHANGE: We now compare the email/password against the User table
+// LOGIN CHANGE: instead of using fixed credentials.
+app.post("/login", async (req: any, res: any) => {
     const { email, password } = req.body || {};
-    if (email === "admin@test.com" && password === "123456") {
+
+    // LOGIN CHANGE: Look up the user by username (we use the email as the username).
+    const user = await prisma.user.findUnique({
+        where: { username: email }
+    });
+
+    // BCRYPT: Compare the plain password sent by the client against the stored hash.
+    const passwordMatches = user
+        ? await bcrypt.compare(password, user.password)
+        : false;
+
+    // LOGIN CHANGE: Only if the user exists and the password matches do we issue a token.
+    if (user && passwordMatches) {
         // JWT: If the credentials are correct, we create a token.
         const token = jwt.sign(
             // JWT: This is the information stored inside the token.
