@@ -38,5 +38,9 @@ jobs:
           cache: 'npm'
           cache-dependency-path: task-manager-react/backend/package-lock.json
       - run: npm ci
+      # `prisma generate` no se conecta a la base de datos, pero prisma.config.ts
+      # exige que DATABASE_URL exista. Valor ficticio a proposito.
       - run: npx prisma generate
+        env:
+          DATABASE_URL: postgresql://user:password@localhost:5432/db
       - run: npm run typecheck
