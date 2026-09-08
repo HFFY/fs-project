@@ -2,7 +2,7 @@
 
 Aplicación full stack para gestionar tareas: crear, listar, editar y eliminar tareas, con registro y login de usuarios mediante JWT.
 
-<!-- BADGE_CI -->
+[![CI](https://github.com/HFFY/fs-project/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/HFFY/fs-project/actions/workflows/ci.yml)
 
 ## 🚀 Instalación local
 
