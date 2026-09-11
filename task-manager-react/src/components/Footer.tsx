@@ -1,3 +1,5 @@
+import { getTaskStats } from "../utils/taskStats";
+
 type Task = {
   id: number;
   text: string;
@@ -9,9 +11,7 @@ type FooterProps = {
 };
 
 function Footer(props: FooterProps) {
-  const total = props.tasks.length;
-  const completed = props.tasks.filter((task) => task.completed).length;
-  const pending = total - completed;
+  const { total, completed, pending } = getTaskStats(props.tasks);
 
   return (
     <footer className="footer">

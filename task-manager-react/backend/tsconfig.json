@@ -35,7 +35,9 @@
     // Recommended Options
     "strict": true,
     "jsx": "react-jsx",
-    "verbatimModuleSyntax": true,
+    // Los modulos puros (ej. src/taskUpdate.ts) usan `export` de ESM y TS los
+    // compila a CommonJS; con verbatimModuleSyntax en true eso seria un error.
+    "verbatimModuleSyntax": false,
     "isolatedModules": true,
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
