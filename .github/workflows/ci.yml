@@ -44,3 +44,42 @@ jobs:
         env:
           DATABASE_URL: postgresql://user:password@localhost:5432/db
       - run: npm run typecheck
+
+  pruebas:
+    name: Pruebas unitarias y cobertura
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./task-manager-react
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: task-manager-react/package-lock.json
+      - run: npm ci
+      - run: npx vitest run --coverage
+
+  e2e:
+    name: Pruebas E2E
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./task-manager-react
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: task-manager-react/package-lock.json
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test --project=chromium
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: task-manager-react/playwright-report/
+          retention-days: 30
