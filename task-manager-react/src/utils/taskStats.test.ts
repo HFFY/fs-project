@@ -18,7 +18,7 @@ describe("getTaskStats", () => {
     ];
 
     expect(getTaskStats(tasks)).toEqual({
-      total: 2,
+      total: 3,
       completed: 1,
       pending: 2,
     });
