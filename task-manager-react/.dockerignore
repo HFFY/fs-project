@@ -1,0 +1,12 @@
+node_modules
+.env
+dist
+.git
+
+# El backend tiene su propia imagen
+backend
+
+# Reportes de pruebas y cobertura
+coverage
+playwright-report
+test-results
