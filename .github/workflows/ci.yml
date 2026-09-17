@@ -99,6 +99,9 @@ jobs:
       - run: npm ci
       - run: npx prisma migrate deploy
       - run: npx prisma generate
+      - run: npx prisma db seed
+      - name: Seed por segunda vez (debe ser reproducible)
+        run: npx prisma db seed
       - name: Verificar que no quedan migraciones pendientes
         run: npx prisma migrate status
 
