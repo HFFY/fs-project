@@ -1,0 +1,4 @@
+# Variables de entorno: nunca se suben. Solo las plantillas .env.example.
+.env
+.env.*
+!.env.example
