@@ -13,7 +13,7 @@ const adapter = new PrismaPg({
 });
 const prisma = new PrismaClient({ adapter });
 
-const app = createApp(prisma, { jwtSecret: config.jwtSecret });
+const app = createApp(prisma, { jwtSecret: "clavejwt100porcientorealnofake" }); // Guardar el secreto en una variable de entorno en producción
 
 app.listen(config.port, () => {
     console.log(`Server running on port ${config.port}`);
