@@ -1,8 +1,3 @@
-// prisma/seed.ts
-//
-// Seed reproducible: usa upsert, asi que correrlo varias veces seguidas no
-// falla ni duplica datos. Se ejecuta con `npx prisma db seed` (Prisma 7 lo
-// toma de migrations.seed en prisma.config.ts, no de package.json).
 require("dotenv/config");
 
 const bcrypt = require("bcrypt");
@@ -25,15 +20,10 @@ async function main() {
         },
     });
 
-    // Insertar un id fijo no avanza la secuencia SERIAL de "Task": sin esto,
-    // el primer POST /tasks intentaria usar id 1 y fallaria con
-    // "Unique constraint failed".
     await prisma.$executeRaw`
         SELECT setval(pg_get_serial_sequence('"Task"', 'id'), (SELECT MAX(id) FROM "Task"))
     `;
 
-    // Usuario de demostracion con una contrasena obviamente ficticia.
-    // update: {} evita volver a hashearla en cada corrida.
     await prisma.user.upsert({
         where: { username: "demo" },
         update: {},
