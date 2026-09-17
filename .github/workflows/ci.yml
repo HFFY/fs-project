@@ -45,6 +45,72 @@ jobs:
           DATABASE_URL: postgresql://user:password@localhost:5432/db
       - run: npm run typecheck
 
+  # Laboratorio 1: los valores sensibles llegan desde GitHub Secrets
+  # (Settings -> Secrets and variables -> Actions). Nunca se escriben aqui.
+  pruebas-backend:
+    name: Backend - Pruebas con variables seguras
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./task-manager-react/backend
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: task-manager-react/backend/package-lock.json
+      # Falla con un mensaje claro si falta un Secret, sin imprimir su valor.
+      - name: Verificar que los Secrets existen
+        run: |
+          test -n "$DATABASE_URL" || { echo "::error::Falta el Secret DATABASE_URL"; exit 1; }
+          test -n "$JWT_SECRET" || { echo "::error::Falta el Secret JWT_SECRET"; exit 1; }
+      - run: npm ci
+      - run: npm run test
+
+  # Laboratorio 2: PostgreSQL efimero que solo vive durante este job.
+  # Sus credenciales son fijas a proposito: no es una base real ni accesible
+  # desde fuera, por eso no necesita Secrets (la de produccion si).
+  migraciones:
+    name: Migraciones y Seeds
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_DB: testdb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+    defaults:
+      run:
+        working-directory: ./task-manager-react/backend
+    env:
+      DATABASE_URL: postgresql://testuser:testpass@localhost:5432/testdb
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: task-manager-react/backend/package-lock.json
+      - run: npm ci
+      - run: npx prisma migrate deploy
+      # Prisma 7: migrate deploy ya no genera el cliente. El seed del
+      # Laboratorio 3 (npx prisma db seed) lo va a necesitar despues de este paso.
+      - run: npx prisma generate
+      - name: Verificar que no quedan migraciones pendientes
+        run: npx prisma migrate status
+
   pruebas:
     name: Pruebas unitarias y cobertura
     runs-on: ubuntu-latest

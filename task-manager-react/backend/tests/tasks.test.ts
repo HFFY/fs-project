@@ -19,7 +19,7 @@ function crearPrismaFalso() {
 describe("POST /tasks", () => {
   it("crea la tarea y responde 201 cuando el texto es valido", async () => {
     const prisma = crearPrismaFalso();
-    const app = createApp(prisma);
+    const app = createApp(prisma, { jwtSecret: "secreto-de-prueba" });
 
     const response = await request(app)
       .post("/tasks")
@@ -39,7 +39,7 @@ describe("POST /tasks", () => {
 
   it("responde 400 cuando el texto viene vacio", async () => {
     const prisma = crearPrismaFalso();
-    const app = createApp(prisma);
+    const app = createApp(prisma, { jwtSecret: "secreto-de-prueba" });
 
     const response = await request(app).post("/tasks").send({ text: "" });
 

@@ -18,13 +18,21 @@ npm install
 
 ### Variables de entorno
 
-Crea un archivo `.env` en `task-manager-react/backend` con las siguientes claves (sin valores reales en este documento):
+Los `.env` reales nunca se suben; solo las plantillas `.env.example`. Genera `JWT_SECRET` con `openssl rand -hex 32`.
 
+```bash
+cp .env.example .env                                            # docker compose
+cp task-manager-react/backend/.env.example task-manager-react/backend/.env   # backend en local
 ```
-DATABASE_URL=
-JWT_SECRET=
-PORT=
-```
+
+| Variable | Sensible | Dónde vive en CI |
+|----------|----------|------------------|
+| `DATABASE_URL` | Sí | GitHub Secret |
+| `JWT_SECRET` | Sí | GitHub Secret |
+| `PORT` | No | — |
+| `NODE_ENV` | No | — |
+
+Si falta `DATABASE_URL` o `JWT_SECRET`, el backend no arranca.
 
 ## 📜 Comandos disponibles
 

@@ -15,8 +15,11 @@ const SALT_ROUNDS = 10;
  * El cliente de Prisma llega como parametro en lugar de crearse aqui adentro:
  * asi index.ts le pasa el real y los tests le pasan uno falso, sin necesidad
  * de una base de datos ni de levantar un puerto.
+ *
+ * El secreto del JWT tambien llega desde afuera (index.ts lo lee del entorno),
+ * para que nunca quede escrito en el codigo.
  */
-export function createApp(prisma: any) {
+export function createApp(prisma: any, config: { jwtSecret: string }) {
     const app = express();
 
     app.use(cors());
@@ -101,7 +104,7 @@ export function createApp(prisma: any) {
         }
         const token = authHeader.split(" ")[1];
         try {
-            const decoded = jwt.verify(token, "secret_key");
+            const decoded = jwt.verify(token, config.jwtSecret);
             res.json({
                 message: "Protected profile data",
                 user: decoded
@@ -159,7 +162,7 @@ export function createApp(prisma: any) {
         if (user && passwordMatches) {
             const token = jwt.sign(
                 { email: email },
-                "secret_key",
+                config.jwtSecret,
                 { expiresIn: "1h" }
             );
             return res.json({

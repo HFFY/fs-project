@@ -1,18 +1,22 @@
 # docker-compose.yml
+#
+# Las credenciales NO viven en este archivo: Compose las lee del .env de la
+# raiz (ignorado por Git). Copia .env.example a .env antes de levantarlo.
 services:
   postgres:
     image: postgres:16-alpine
     restart: always
     environment:
-      POSTGRES_USER: appuser
-      POSTGRES_PASSWORD: apppass
-      POSTGRES_DB: appdb
+      POSTGRES_USER: ${POSTGRES_USER:?Falta POSTGRES_USER en .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Falta POSTGRES_PASSWORD en .env}
+      POSTGRES_DB: ${POSTGRES_DB:?Falta POSTGRES_DB en .env}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U appuser -d appdb"]
+      # $$ para que la variable la expanda el contenedor y no Compose.
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -25,7 +29,7 @@ services:
       context: ./task-manager-react/backend
       target: build
     environment:
-      DATABASE_URL: postgresql://appuser:apppass@postgres:5432/appdb
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
     command: ["npx", "prisma", "migrate", "deploy"]
     depends_on:
       postgres:
@@ -35,9 +39,11 @@ services:
     build: ./task-manager-react/backend
     restart: always
     environment:
-      DATABASE_URL: postgresql://appuser:apppass@postgres:5432/appdb
-    # El puerto 3000 esta fijo en src/index.ts y el frontend llama a
-    # http://localhost:3000, por eso se publica el mismo puerto.
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      JWT_SECRET: ${JWT_SECRET:?Falta JWT_SECRET en .env}
+      PORT: 3000
+    # El frontend llama a http://localhost:3000, por eso el backend escucha
+    # en PORT=3000 y se publica el mismo puerto.
     ports:
       - "3000:3000"
     depends_on:
