@@ -38,15 +38,11 @@ jobs:
           cache: 'npm'
           cache-dependency-path: task-manager-react/backend/package-lock.json
       - run: npm ci
-      # `prisma generate` no se conecta a la base de datos, pero prisma.config.ts
-      # exige que DATABASE_URL exista. Valor ficticio a proposito.
       - run: npx prisma generate
         env:
           DATABASE_URL: postgresql://user:password@localhost:5432/db
       - run: npm run typecheck
 
-  # Laboratorio 1: los valores sensibles llegan desde GitHub Secrets
-  # (Settings -> Secrets and variables -> Actions). Nunca se escriben aqui.
   pruebas-backend:
     name: Backend - Pruebas con variables seguras
     runs-on: ubuntu-latest
@@ -71,9 +67,6 @@ jobs:
       - run: npm ci
       - run: npm run test
 
-  # Laboratorio 2: PostgreSQL efimero que solo vive durante este job.
-  # Sus credenciales son fijas a proposito: no es una base real ni accesible
-  # desde fuera, por eso no necesita Secrets (la de produccion si).
   migraciones:
     name: Migraciones y Seeds
     runs-on: ubuntu-latest
@@ -105,8 +98,6 @@ jobs:
           cache-dependency-path: task-manager-react/backend/package-lock.json
       - run: npm ci
       - run: npx prisma migrate deploy
-      # Prisma 7: migrate deploy ya no genera el cliente. El seed del
-      # Laboratorio 3 (npx prisma db seed) lo va a necesitar despues de este paso.
       - run: npx prisma generate
       - name: Verificar que no quedan migraciones pendientes
         run: npx prisma migrate status
