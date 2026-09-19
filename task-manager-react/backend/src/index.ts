@@ -14,7 +14,7 @@ const adapter = new PrismaPg({
 const prisma = new PrismaClient({ adapter });
 
 const app = createApp(prisma, { jwtSecret: config.jwtSecret });
-throw new Error('fallo simulado')
+
 app.listen(config.port, () => {
     console.log(`Server running on port ${config.port}`);
 });
