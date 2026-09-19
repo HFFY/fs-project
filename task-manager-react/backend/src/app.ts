@@ -29,6 +29,12 @@ export function createApp(prisma: any, config: { jwtSecret: string }) {
         res.send("Backend is running");
     });
 
+    // Ruta de salud: Railway la consulta (Healthcheck Path) para saber si el
+    // servicio esta listo. No toca la base de datos a proposito.
+    app.get("/health", (req: any, res: any) => {
+        res.status(200).json({ status: "ok" });
+    });
+
     app.get("/tasks", async (req: any, res: any) => {
         const tasksFromDatabase = await prisma.task.findMany();
         res.json(tasksFromDatabase);
