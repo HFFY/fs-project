@@ -5,6 +5,11 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      confirmacion:
+        description: 'Escribe DEPLOY para confirmar el despliegue a produccion'
+        required: true
 
 jobs:
   frontend:
@@ -144,10 +149,15 @@ jobs:
           path: task-manager-react/playwright-report/
           retention-days: 30
   
-  deploy-production:
-    name: Deploy a Production
+  # Nunca se dispara solo: requiere lanzar el workflow a mano desde main
+  # (Actions > CI > Run workflow) y escribir DEPLOY como confirmacion.
+  deploy-produccion:
+    name: Deploy a Producción (manual)
     needs: [frontend, backend, pruebas-backend, pruebas, e2e, migraciones]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      github.event.inputs.confirmacion == 'DEPLOY' &&
+      github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -155,7 +165,7 @@ jobs:
         run: npm install -g @railway/cli
       # El Dockerfile vive en task-manager-react/backend, no en la raiz:
       # --path-as-root sube solo esa carpeta como raiz del build.
-      - name: Desplegar a Railway (production)
+      - name: Desplegar a Railway (produccion)
         run: railway up ./task-manager-react/backend --path-as-root --ci --service backend --environment production
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
