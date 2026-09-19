@@ -144,8 +144,8 @@ jobs:
           path: task-manager-react/playwright-report/
           retention-days: 30
   
-  deploy-staging:
-    name: Deploy a Staging
+  deploy-production:
+    name: Deploy a Production
     needs: [frontend, backend, pruebas-backend, pruebas, e2e, migraciones]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
@@ -155,8 +155,8 @@ jobs:
         run: npm install -g @railway/cli
       # El Dockerfile vive en task-manager-react/backend, no en la raiz:
       # --path-as-root sube solo esa carpeta como raiz del build.
-      - name: Desplegar a Railway (staging)
-        run: railway up ./task-manager-react/backend --path-as-root --ci --service backend --environment staging
+      - name: Desplegar a Railway (production)
+        run: railway up ./task-manager-react/backend --path-as-root --ci --service backend --environment production
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
 
