@@ -13,6 +13,7 @@ type Task = {
 
 function HomePage() {
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [firstName, setFirstName] = useState("");
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -21,6 +22,29 @@ function HomePage() {
       setTasks(data);
     };
     fetchTasks();
+  }, []);
+
+  useEffect(() => {
+    // Pide el perfil con el token guardado al iniciar sesión para saludar
+    // por su nombre. Si no hay token, falla la petición o el usuario es
+    // antiguo y no registró nombre, el saludo queda como "Bienvenido".
+    const fetchProfile = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+      try {
+        const response = await fetch("http://localhost:3000/profile", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (!response.ok) return;
+        const data = await response.json();
+        setFirstName(data.user?.firstName ?? "");
+      } catch {
+        // Sin conexión: se muestra el saludo genérico.
+      }
+    };
+    fetchProfile();
   }, []);
 
   const handleAddTask = async (text: string) => {
@@ -83,6 +107,9 @@ function HomePage() {
 
   return (
     <div className="app-container">
+      <h1 className="welcome-title">
+        {firstName ? `Bienvenido ${firstName}` : "Bienvenido"}
+      </h1>
       <Header />
       <TaskInput onAddTask={handleAddTask} />
       {tasks.length === 0 ? (

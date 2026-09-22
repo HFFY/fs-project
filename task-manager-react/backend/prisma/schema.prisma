@@ -22,6 +22,9 @@ model Task {
 }
 
 model User {
-  username String @id
-  password String
+  username  String  @id
+  password  String
+  // Opcionales: los usuarios creados antes de esta columna no tienen nombre.
+  firstName String?
+  lastName  String?
 }

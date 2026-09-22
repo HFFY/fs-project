@@ -6,6 +6,9 @@ type LoginProps = {
   buttonLabel?: string;
   error?: string;
   footer?: React.ReactNode;
+  // Campos adicionales que se muestran antes de usuario y contraseña
+  // (por ejemplo, nombre y apellidos en la pantalla de registro).
+  extraFields?: React.ReactNode;
 };
 
 function Login(props: LoginProps) {
@@ -22,6 +25,7 @@ function Login(props: LoginProps) {
     <div className="login-container">
       <form className="login-form" onSubmit={handleSubmit}>
         <h1>{props.title ?? "Log In"}</h1>
+        {props.extraFields}
         <input
           type="text"
           value={username}

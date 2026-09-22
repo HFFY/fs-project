@@ -66,6 +66,11 @@ input {
   margin-top: 4px;
 }
 
+.welcome-title {
+  margin: 0 0 8px;
+  text-align: center;
+}
+
 .task-card {
   display: flex;
   align-items: center;
