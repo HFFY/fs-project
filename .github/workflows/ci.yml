@@ -148,6 +148,31 @@ jobs:
           name: playwright-report
           path: task-manager-react/playwright-report/
           retention-days: 30
+
+  # Se dispara solo en cada push a main (es decir, cada merge de un PR)
+  # y unicamente si todos los checks anteriores pasaron.
+  # Usa un Project Token de Railway generado para el environment "staging".
+  deploy-staging:
+    name: Deploy a Staging (automatico)
+    needs: [frontend, backend, pruebas-backend, pruebas, e2e, migraciones]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: staging
+    concurrency:
+      group: deploy-staging
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verificar que el Secret existe
+        run: test -n "$RAILWAY_TOKEN" || { echo "::error::Falta el Secret RAILWAY_TOKEN_STAGING"; exit 1; }
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_STAGING }}
+      - name: Instalar Railway CLI
+        run: npm install -g @railway/cli
+      - name: Desplegar a Railway (staging)
+        run: railway up ./task-manager-react/backend --path-as-root --ci --service backend --environment staging
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_STAGING }}
   
   # Nunca se dispara solo: requiere lanzar el workflow a mano desde main
   # (Actions > CI > Run workflow) y escribir DEPLOY como confirmacion.
