@@ -101,7 +101,7 @@ export function createApp(prisma: any, config: { jwtSecret: string }) {
         });
     });
 
-    app.get("/profile", (req: any, res: any) => {
+    app.get("/profile", async (req: any, res: any) => {
         const authHeader = req.headers.authorization;
         if (!authHeader) {
             return res.status(401).json({
@@ -109,24 +109,47 @@ export function createApp(prisma: any, config: { jwtSecret: string }) {
             });
         }
         const token = authHeader.split(" ")[1];
+        let decoded: any;
         try {
-            const decoded = jwt.verify(token, config.jwtSecret);
-            res.json({
-                message: "Protected profile data",
-                user: decoded
-            });
+            decoded = jwt.verify(token, config.jwtSecret);
         } catch (error) {
-            res.status(401).json({
+            return res.status(401).json({
                 message: "Invalid token"
             });
         }
+
+        // El nombre se lee de la base de datos (no del token) para que el
+        // perfil refleje siempre lo que hay guardado. Los usuarios antiguos
+        // no tienen nombre: en ese caso los campos llegan como null.
+        const user = await prisma.user.findUnique({
+            where: { username: decoded.email }
+        });
+
+        res.json({
+            message: "Protected profile data",
+            user: {
+                ...decoded,
+                firstName: user?.firstName ?? null,
+                lastName: user?.lastName ?? null
+            }
+        });
     });
 
     app.post("/users", async (req: any, res: any) => {
-        const { username, password } = req.body || {};
+        const { username, password, firstName, lastName } = req.body || {};
         if (!username || username.trim() === "" || !password || password.trim() === "") {
             return res.status(400).json({
                 message: "Username and password are required"
+            });
+        }
+
+        // Nombre y apellidos son obligatorios al registrarse. La columna sigue
+        // siendo nullable solo por los usuarios creados antes de este cambio.
+        const cleanFirstName = typeof firstName === "string" ? firstName.trim() : "";
+        const cleanLastName = typeof lastName === "string" ? lastName.trim() : "";
+        if (cleanFirstName === "" || cleanLastName === "") {
+            return res.status(400).json({
+                message: "First name and last name are required"
             });
         }
 
@@ -144,12 +167,16 @@ export function createApp(prisma: any, config: { jwtSecret: string }) {
         const newUser = await prisma.user.create({
             data: {
                 username: username,
-                password: hashedPassword
+                password: hashedPassword,
+                firstName: cleanFirstName,
+                lastName: cleanLastName
             }
         });
         res.status(201).json({
             message: "User created successfully",
-            username: newUser.username
+            username: newUser.username,
+            firstName: newUser.firstName,
+            lastName: newUser.lastName
         });
     });
 
